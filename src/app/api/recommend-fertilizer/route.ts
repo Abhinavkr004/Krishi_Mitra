@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   try {
     const { temperature, humidity, moisture, soilType, cropType, nitrogen, phosphorous } = await request.json();
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
     const prompt = `Based on the following information, recommend suitable fertilizers:
     Temperature: ${temperature}°C

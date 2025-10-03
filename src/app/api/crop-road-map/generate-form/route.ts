@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       Format the roadmap in HTML for easy display.
     `;
 
-    const model = await genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = await genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
     const result = await model.generateContent(prompt);
 
     if (!result) {

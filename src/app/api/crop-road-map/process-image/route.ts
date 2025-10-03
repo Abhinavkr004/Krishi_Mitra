@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
     const prompt = "Analyze this crop image and generate a detailed roadmap for growing this crop. Include information about soil preparation, planting, care instructions, pest management, and harvesting. Format the roadmap in inside the body tag part only for easy display(dont add body tag).";
     const imageParts = [

@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       console.log(lang)
       const { cropData } = await request.json();
 
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
 
       const prompt = `You are an agricultural expert AI. Provide detailed information about the following crop: ${cropData}. Include the following information in your response, using the exact headers provided:

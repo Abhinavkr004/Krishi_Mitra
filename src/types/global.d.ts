@@ -22,3 +22,5 @@ interface SpeechRecognitionResult {
     SpeechRecognition: new () => SpeechRecognition;
     webkitSpeechRecognition: new () => SpeechRecognition;
   }
+
+declare module "*.css";

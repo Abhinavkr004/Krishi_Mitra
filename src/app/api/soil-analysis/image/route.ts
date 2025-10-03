@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
     const prompt = "Analyze this soil sample image and provide a detailed soil quality analysis. Include information on soil type, pH levels, nutrient content (N, P, K), organic matter content, and any visible issues or deficiencies. Also, suggest suitable crops for this soil and any recommendations for improving soil quality.";
     const imageParts = [

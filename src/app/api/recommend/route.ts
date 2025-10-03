@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
        } = await request.json();
     
      
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
     const prompt = `${humidity} ${location} ${rainfall} ${soilType} ${temperature} ${timeInHand} give details`;
 

@@ -103,13 +103,15 @@ const translations = {
 
 interface SidebarProps {
   currentLang: string;
+   isCollapsed: boolean;
+  onToggle: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentLang }) => {
+const Sidebar: React.FC<SidebarProps> = ({ currentLang,  isCollapsed, onToggle  }) => {
   const pathname = usePathname();
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [diseaseMenuOpen, setDiseaseMenuOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // const [isCollapsed, setIsCollapsed] = useState(false);
 
   let t = translations.en;
   if (currentLang === 'en') {
@@ -252,12 +254,12 @@ const Sidebar: React.FC<SidebarProps> = ({ currentLang }) => {
     document.documentElement.classList.toggle("dark");
   };
 
-  const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
-  };
+  // const toggleSidebar = () => {
+  //   // setIsCollapsed(!isCollapsed);
+  // };
 
   return (
-    <div className={`flex flex-col h-screen p-4 m-3 bg-white shadow-lg dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
+    <div className={`fixed top-16 left-0 h-[740px] flex flex-col  z-50 p-4 m-3 bg-white shadow-lg dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
       <div className="flex items-center justify-between mb-6">
         {!isCollapsed && (
           <h2 className="text-2xl font-bold text-green-600 dark:text-green-400">
@@ -265,7 +267,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentLang }) => {
           </h2>
         )}
         <button
-          onClick={toggleSidebar}
+          onClick={onToggle}
           className="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-800 dark:text-green-400 dark:hover:bg-green-700"
         >
           {isCollapsed ? <FaChevronRight /> : <FaChevronLeft />}

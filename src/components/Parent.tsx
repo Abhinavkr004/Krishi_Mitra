@@ -15,6 +15,7 @@ interface ParentComponentProps {
 
 const ParentComponent: React.FC<ParentComponentProps> = ({ children }) => {
   const [currentLang, setCurrentLang] = useState('en');
+  const [isCollapsed, setIsCollapsed] = useState(false);
    const [refresh,setre] = useState(false);
    const router  = useRouter()
   const handleLanguageChange = (lang: string) => {
@@ -38,10 +39,13 @@ function reload(lang:string){
       
       <div className="flex">
         {/* Sidebar */}
-        <Sidebar currentLang={currentLang} />
+        <Sidebar currentLang={currentLang}
+          isCollapsed={isCollapsed} 
+          onToggle={() => setIsCollapsed(!isCollapsed)} 
+          />
 
         {/* Main Content */}
-        <main className="flex-1 p-4">
+        <main className="flex-1 p-4 w-full ${isCollapsed ? 'ml-20' : 'ml-64'}">
           {children}
           <ChatBot />
         </main>

@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the generative model instance
-    const model = await genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = await genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
     // Define the prompt for the generative AI
     const prompt = `${message}`;

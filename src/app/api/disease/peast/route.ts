@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
     const prompt = "Analyze the uploaded image of a pest and provide the following information: 1. The name of the pest. 2. A brief description of its appearance. 3. Symptoms of infestation caused by this pest. 4. Recommended treatment options for managing this pest.";
 

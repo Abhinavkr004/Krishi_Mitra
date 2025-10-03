@@ -85,9 +85,6 @@ async function handleRequest(request: NextRequest) {
     
     // Return the correctly formatted weather data
     return NextResponse.json(weatherData);
-    
-
-    
 
     return NextResponse.json(weatherData);
   } catch (error) {
