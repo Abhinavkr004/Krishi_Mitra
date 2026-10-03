@@ -25,7 +25,7 @@ interface NavbarProps {
 
 const translations = {
   en: {
-    appName: "ArgiVision",
+    appName: "AgriVision",
     analysis: "Analysis",
     robofarmer: "RoboFarmer",
     economicStatus: "Economic Status",
