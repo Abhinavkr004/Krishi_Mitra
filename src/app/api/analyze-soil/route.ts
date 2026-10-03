@@ -1,53 +1,129 @@
-import { NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
-import axios from 'axios'
+import { NextResponse } from "next/server";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Initialize the Google Generative AI client
-const genAI = new GoogleGenerativeAI(process.env.NEW_GOOGLE_API_KEY as string)
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
+const MODEL_NAME = "gemini-flash-latest"; // same model your /api/recommend route uses
+const MAX_ATTEMPTS = 3;
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024; // ~4 MB decoded size
+
+const PROMPT = `You are an expert soil scientist with over 15 years of experience analyzing soil images.
+Analyze the soil in the attached image and give a clear, well-organized answer covering:
+
+1. Soil texture (sandy, loamy, clayey, etc.) and color, including any visible features such as moisture, organic matter, or cracking.
+2. Crops that are likely to thrive in this soil.
+3. Practical ways to improve soil health for better yields.
+
+Base your answer only on what is visible in the image. If the image does not clearly show soil, say so.`;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function getStatus(err: unknown): number | undefined {
+  return (err as { status?: number })?.status;
+}
+
+async function generateWithRetry(
+  genAI: GoogleGenerativeAI,
+  parts: Parameters<
+    ReturnType<GoogleGenerativeAI["getGenerativeModel"]>["generateContent"]
+  >[0],
+): Promise<string> {
+  const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const result = await model.generateContent(parts);
+      return result.response.text();
+    } catch (err) {
+      lastError = err;
+      const status = getStatus(err);
+      const retryable = status === 503 || status === 429 || status === 500;
+
+      if (!retryable || attempt === MAX_ATTEMPTS) throw err;
+
+      await sleep(1000 * 2 ** (attempt - 1)); // 1s, then 2s
+    }
+  }
+
+  throw lastError;
+}
 
 export async function POST(request: Request) {
   try {
-    const { image } = await request.json()
-
-    if (!image) {
-      return NextResponse.json({ error: 'No image provided' }, { status: 400 })
+    const apiKey = process.env.GOOGLE_API_KEY;
+    if (!apiKey) {
+      console.error("GOOGLE_API_KEY is not set");
+      return NextResponse.json(
+        { error: "Server is not configured correctly." },
+        { status: 500 },
+      );
     }
 
-    // Decode base64 image
-    const buffer = Buffer.from(image.split(',')[1], 'base64')
+    let body: { image?: unknown };
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid request body." },
+        { status: 400 },
+      );
+    }
 
-    // Call Gemini API
-    const model = await genAI.getGenerativeModel({ model: 'gemini-flash-latest' }); // Ensure this is resolved correctly.
+    const image = body.image;
+    const match =
+      typeof image === "string"
+        ? image.match(
+            /^data:(image\/(?:jpeg|png|webp|heic|heif));base64,([A-Za-z0-9+/=\r\n]+)$/,
+          )
+        : null;
 
-    const result = await model.generateContent([
-      `You are an expert soil scientist with over 15 years of experience in analyzing soil samples and images. Your expertise lies in identifying soil types, textures, and colors, as well as recommending suitable crops based on the soil characteristics you observe.
+    if (!match) {
+      return NextResponse.json(
+        {
+          error:
+            "Please provide a JPEG, PNG or WebP image as a base64 data URL.",
+        },
+        { status: 400 },
+      );
+    }
 
-Your task is to analyze an image of soil that will be provided to you and provide a detailed description. Here are the specifics regarding the image you will analyze:
+    const [, mimeType, data] = match;
 
-- Soil Image: 
-- Location: 
-- Climate Type: 
-- Any Known Soil Amendments: 
+    // Approximate decoded size from the base64 length
+    const approxBytes = Math.floor((data.length * 3) / 4);
+    if (approxBytes > MAX_IMAGE_BYTES) {
+      return NextResponse.json(
+        { error: "Image is too large. Please use an image under 4 MB." },
+        { status: 413 },
+      );
+    }
 
-As you analyze the image, please keep the following in mind: consider the visual cues in the image to determine key soil characteristics such as its texture (sandy, loamy, clayey, etc.), color (base colors, variations), and any observable features. Based on this analysis, provide recommendations for potential crops that could thrive in this soil.
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const analysis = await generateWithRetry(genAI, [
+      PROMPT,
+      { inlineData: { mimeType, data } },
+    ]);
 
-If applicable, you may also include how soil health can be enhanced for better crop yields based on the observed characteristics.`,
-      {
-        inlineData: {
-          mimeType: 'image/jpeg',
-          data: buffer.toString('base64')
-        }
-      }
-    ])
-
-    const analysis = result.response?.text()
-
-    return NextResponse.json({ analysis })
+    return NextResponse.json({ analysis });
   } catch (error) {
-    console.error('Error analyzing soil:', error)
-    return NextResponse.json({ error: 'Error analyzing soil' }, { status: 500 })
+    console.error("Error analyzing soil:", error);
+
+    const status = getStatus(error);
+    if (status === 503 || status === 429) {
+      return NextResponse.json(
+        {
+          error:
+            "The AI service is busy right now. Please try again in a moment.",
+        },
+        { status: 503 },
+      );
+    }
+
+    return NextResponse.json(
+      { error: "Error analyzing soil" },
+      { status: 500 },
+    );
   }
 }
-
-// Update to new API config format
-export const runtime = 'edge' // If edge runtime is required, otherwise use 'nodejs'

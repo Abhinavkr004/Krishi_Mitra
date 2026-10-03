@@ -65,27 +65,59 @@ export default function CropDashboard() {
     }
   }
 
-  const parseRecommendation = (text: string): Record<string, any> => {
-    const sections = text.split('###').filter(section => section.trim() !== '')
-    return sections.reduce((acc: Record<string, any>, section: string) => {
-      const [title, ...content] = section.split('\n');
-      const key = title.trim().replace(/^\d+\.\s*/, '').replace(/:/g, '');
-      let value = content.join('\n').trim();
+  const SECTION_TITLES = [
+    "Best Conditions for Crop",
+    "Current Price in Market",
+    "Best Weather",
+    "pH Level",
+    "Tips to Protect",
+    "Water Consumption",
+    "Electric Consumption",
+    "Best Places to Grow in India",
+    "AI Generated Tips",
+    "Top Consumers",
+    "Percentage of Risk",
+    "Blog Cards",
+  ];
 
-      // Remove asterisks, clean up the text, and preserve newlines
-      value = value
-        .replace(/\*/g, '')                        // Remove all asterisks
-        .split('\n')                               // Split by newlines
-        .map(line => line.trim())                  // Trim each line
-        .filter(Boolean)                           // Remove empty lines
-        .join('\n');                               // Join with '\n' to keep new lines
+  const parseRecommendation = (text: string): Record<string, string> => {
+    // every section starts as '' so nothing is ever undefined
+    const result: Record<string, string> = {};
+    SECTION_TITLES.forEach((t) => (result[t] = ""));
 
-      acc[key] = value
-      console.log(key, value);
-      return acc
-    }, {})
-  }
+    let current: string | null = null;
+    let inCodeBlock = false;
 
+    for (const rawLine of text.split("\n")) {
+      // skip JSON code blocks (the charts get their data from other APIs)
+      if (rawLine.trim().startsWith("```")) {
+        inCodeBlock = !inCodeBlock;
+        continue;
+      }
+      if (inCodeBlock) continue;
+
+      // strip #, *, leading "1." and trailing ":" so any header style matches
+      const cleaned = rawLine
+        .replace(/[#*]/g, "")
+        .replace(/^\s*\d+\.\s*/, "")
+        .replace(/:\s*$/, "")
+        .trim();
+
+      const match = SECTION_TITLES.find(
+        (t) => t.toLowerCase() === cleaned.toLowerCase(),
+      );
+      if (match) {
+        current = match;
+        continue;
+      }
+
+      if (current) {
+        const line = rawLine.replace(/\*/g, "").trim();
+        if (line) result[current] += (result[current] ? "\n" : "") + line;
+      }
+    }
+    return result;
+  };
   const parsedRecommendation = recommendation ? parseRecommendation(recommendation) : null
 
   return (
@@ -150,7 +182,7 @@ export default function CropDashboard() {
               <CardTitle className="flex items-center"><Thermometer className="mr-2" /> Best Conditions for Crop</CardTitle>
             </CardHeader>
             <CardContent>
-              {parsedRecommendation['Best Conditions for Crop'].split('\n').map((line: string, index: number) => (
+              {(parsedRecommendation['Best Conditions for Crop'] ?? 'No data available').split('\n').map((line: string, index: number) => (
                 <p key={index} className="mb-2">{line}</p>
               ))}
             </CardContent>
@@ -307,7 +339,10 @@ export default function CropDashboard() {
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold mb-2">{parsedRecommendation['Percentage of Risk']}</p>
-              <Progress value={parseInt(parsedRecommendation['Percentage of Risk'])} className="mt-2" />
+              <Progress
+  value={parseInt(parsedRecommendation['Percentage of Risk'].match(/\d+/)?.[0] ?? '0')}
+  className="mt-2"
+/>
             </CardContent>
           </Card>
 

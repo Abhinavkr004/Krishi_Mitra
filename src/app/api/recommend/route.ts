@@ -12,8 +12,8 @@ export async function POST(request: NextRequest) {
       
       location,
     
-      rainfall
-      ,
+      rainfall,
+      
       soilType,
       
       temperature,
